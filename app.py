@@ -13,8 +13,13 @@ ORDERS = [
 
 
 def list_orders(headers):
-    # VULNERABILITY: caller identity and order ownership are not checked.
-    return 200, {"orders": ORDERS}
+    principal = authenticate(headers)
+    if principal is None:
+        return 401, {"error": "authentication required"}
+    if principal["role"] == "support":
+        return 200, {"orders": ORDERS}
+    owned = [order for order in ORDERS if order["customer_id"] == principal["customer_id"]]
+    return 200, {"orders": owned}
 
 
 class Handler(BaseHTTPRequestHandler):
